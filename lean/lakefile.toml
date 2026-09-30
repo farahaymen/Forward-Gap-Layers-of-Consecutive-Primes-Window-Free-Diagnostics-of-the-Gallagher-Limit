@@ -1,0 +1,14 @@
+name = "fgp"
+defaultTargets = ["FGP"]
+
+# Mathlib is pinned to the revision the statements in FGP.lean were checked
+# against. To move to current Mathlib, replace `rev` with "master", run
+# `lake update`, then copy .lake/packages/mathlib/lean-toolchain over
+# ./lean-toolchain so the binary cache matches.
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "18dc857edd2da9c0d63672b94fbaf48a9f4810b5"
+
+[[lean_lib]]
+name = "FGP"

@@ -1,0 +1,54 @@
+\section{Register of assumptions}
+\label{app:assumptions}
+
+Every assumption the results rest on is listed here with its status: \textbf{V} verified by computation (the check is in the released \texttt{selftest.py}), \textbf{S} stated and relied upon without proof, or \textbf{L} a limitation that bounds what is claimed.
+
+\subsection*{The census}
+
+\begin{enumerate}
+\item[V] \emph{The sieve is correct.} Checked against tabulated $\pi(10^k)$ and $p_n$, the twin-prime counts $\pi_2(10^k)$ (the $g=2$ layer at $10^{10}$ must be $27\,412\,679$), and the maximal-gap record; and reproduced independently by a NumPy implementation sharing no code, language or data layout, over the whole range: all \verifyLayers{} layer counts at all \nScales{} checkpoints agree exactly to $X=\verifyXmax$, and the layer sums and sums of squares agree at the smallest checkpoint, where the primes can be enumerated directly.
+\item[V] \emph{Layers partition the classified primes.} The counts sum to $N-1$ at every checkpoint, and the gaps telescope to $p_{N+1}-p_2$, recovering $p_{N+1}=10\,000\,000\,019$.
+\item[V] \emph{No gap is silently dropped.} The accumulator is bounded at $g<512$; both the census and the independent verifier now abort rather than truncating if a larger gap occurs. Below $10^{10}$ the maximal gap is $354$, but the bound binds above roughly $7\times10^{11}$.
+
+\item[V] \emph{The verifier covers the last checkpoint.} A verifier sieving exactly $[2,X]$ cannot classify its own last prime and so cannot report the checkpoint at $N=\pi(X)$; it must sieve past $X$ by a margin, as the census does. This was a defect in an earlier verifier and is the reason the largest scales were previously left unchecked.
+\item[V] \emph{No integer overflow.} Layer prime-sums total $2.2\times10^{18}$, within 64 bits by a factor of eight; sums of squares reach $4.6\times10^{28}$ and are accumulated in 128 bits.
+\item[V] \emph{Checkpoint/restart does not perturb the result.} Runs interrupted and resumed at segment boundaries produce byte-identical output.
+\item[V] \emph{Sieving past $X$ suffices to classify every prime up to $X$.} A margin of $10^3$ is used; Bertrand's postulate gives the unconditional bound $2X$ (Appendix~\ref{app:lean}).
+\end{enumerate}
+
+\subsection*{The frequency statistic}
+
+\begin{enumerate}
+\item[V] \emph{The arithmetic factor $H(g)$ is computed correctly.} Checked against symbolic factorisation for all even $g<400$. An earlier version was wrong for ninety-two of the ninety-nine even gaps below $200$ (Section~\ref{sec:erratum}).
+\item[V] \emph{The Poisson fit finds the likelihood maximum.} The IRLS slope agrees with a derivative-free optimiser on the same objective to $10^{-7}$.
+\item[S] \emph{Counts are treated as independent Poisson variates.} They are neither independent nor random; the standard errors on $\Cfit$ are those of that working model and measure arithmetic fluctuation only.
+\item[S] \emph{The Hardy--Littlewood envelope applies to consecutive gaps.} The singular series governs prime pairs at distance $g$; its use for the gap to the \emph{next} prime is the standard heuristic step, and the departure it induces is part of what Sections~\ref{sec:local} and~\ref{sec:spatial} measure.
+
+\item[V] \emph{The comparison with the literature is in the right normalisation.} Wolf fits in $u=g\,\pi(X)/X$, so his slope is $\Cfit/\CW$ and not $\Cfit$; \eqref{eq:swolf} records the conversion, and the published value is reproduced from this census to four decimal places under the specification his description implies.
+\item[L] \emph{The fitting window is an analyst choice.} This is the subject of Section~\ref{sec:grid} rather than an assumption we defend.
+\end{enumerate}
+
+\subsection*{The local diagnostics}
+
+\begin{enumerate}
+\item[V] \emph{Differencing gives the exact distribution on each interval.} The differenced counts are non-negative and sum to the interval's prime count; the local mean gap matches $\log\Xeff$ to $5\times10^{-4}$ relative.
+\item[V] \emph{The discrepancy $D$ is a supremum over the full even grid.} Unoccupied gaps are included, since the survival function is a step function and the supremum can fall at a gap no prime carries. In this range the value is unchanged, because the holes lie in the far tail.
+\item[V] \emph{The bootstrap standard errors are correct.} They agree with the delta method to within $5\%$ and are stable across seeds.
+\item[S] \emph{Independence across intervals holds under multinomial resampling.} The intervals are disjoint sets of primes; the primes themselves are deterministic.
+\item[S] \emph{$\Etwo$, $\Ethree$ and $D$ have the stated exponential values.} Verified by quadrature. Also formalised in Appendix~\ref{app:lean}, where the statements and the Mathlib names they rest on are checked but the proof terms are not yet machine-checked.
+\item[L] \emph{The power-law exponents are descriptive.} Unweighted fits on nineteen autocorrelated residuals; the standard errors on $\beta$ are optimistic.
+\item[L] \emph{$D$ is convention-dependent.} Its absolute level, and the exponent fitted to it, differ between the left-endpoint and midpoint conventions; only the trend is read.
+\end{enumerate}
+
+\subsection*{The spatial statistic}
+
+\begin{enumerate}
+\item[V] \emph{The standard error \eqref{eq:varR} is correct.} Checked against a direct bootstrap over the enumerated primes of a layer.
+
+\item[V] \emph{The amplitude ratio is measured, not eyeballed.} Census and model slopes are fitted over the same window in the scaling variable at every scale; the ratio is $\ampRatio\pm\ampRatioSD$ with range $[\ampRatioMin,\ampRatioMax]$ and no trend.
+\item[V] \emph{$C_2H(g)$ cancels in $R$.} It is constant in $t$ and appears in both the numerator and the denominator of the layer mean.
+\item[V] \emph{The density model is evaluated accurately.} The quadrature is performed in $u=\log t$ so that no overflow occurs, and reproduces the analytic first-order expansion of Appendix~\ref{app:expansion} to $3\times10^{-4}$ at $\logX=10^{4}$.
+\item[S] \emph{The model's envelope.} The conditional gap law is taken to be exactly exponential with rate $1/\log t$, and the prime density to be $1/\log t$. Both are approximations; the $\pi(t)/t$ variant is reported alongside, and the resulting amplitude error is measured rather than assumed (Section~\ref{sec:crossover}).
+\item[L] \emph{The scales are nested.} $R$ requires the whole range $[2,X]$ and cannot be localised, so successive $g^*$ are strongly correlated and only single-scale statements are made.
+\item[L] \emph{Layers with fewer than $30$ primes are excluded from $R$.} The far tail $g\gtrsim1.5\logX$ is therefore not tested.
+\end{enumerate}
