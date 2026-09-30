@@ -9,30 +9,94 @@ is a `\newcommand` written by the same run that produced the figures.
 
 ## Build
 
+### Windows (PowerShell, including the VS Code terminal)
+
 From the repository root:
+
+```powershell
+.\build.ps1
+```
+
+That compiles the sieve if a compiler is present, builds the census, runs the
+45 accuracy checks, writes the tables, figures and macros, and typesets the
+manuscript to `paper\main.pdf`.
+
+If PowerShell refuses with "running scripts is disabled on this system", that
+is Windows' execution policy, not a problem with the script. Either run it this
+way each time, which changes no setting:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1
+```
+
+or allow local scripts once, for your account only:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+**If the terminal advertises the Microsoft Store when you run it**, Windows is
+shadowing Python with a stub that only opens the Store. Install real Python
+from python.org, ticking "Add python.exe to PATH", and switch off both stubs
+under Settings > Apps > Advanced app settings > App execution aliases. The
+script skips those stubs and falls back to the `py -3` launcher on its own, so
+it will work as soon as any real Python 3 is present.
+
+Other targets:
+
+```powershell
+.\build.ps1 census       # just the layer census
+.\build.ps1 check        # the 45 offline accuracy checks
+.\build.ps1 analysis     # tables, figures and macros
+.\build.ps1 paper        # the PDF
+.\build.ps1 full         # as the default, but verifies all 20 checkpoints
+.\build.ps1 lean         # check the Lean proofs
+.\build.ps1 clean        # remove generated files, keep the census
+.\build.ps1 distclean    # remove generated files and the census
+.\build.ps1 help         # this list
+```
+
+Options: `-Verify <n>` sets the upper X for the independent reimplementation
+(`0` disables it), `-NoCompiler` ignores any C compiler and uses the pure-Python
+census generator, and `-Python <path>` forces a particular interpreter.
+
+**If you have several Pythons installed** (an Anaconda one, an MSYS2 one, the
+Microsoft Store stubs), the script probes each and picks the one that actually
+has `numpy`, `scipy`, `pandas`, `matplotlib` and `sympy`, rather than the first
+one on PATH. It prints which it chose. To override:
+
+```powershell
+.\build.ps1 -Python "$HOME\anaconda3\python.exe"
+```
+
+**On the C compiler.** `fgp_sieve.c` uses `__builtin_ctz` and
+`unsigned __int128`, which are GCC and Clang extensions. MSVC (`cl.exe`) cannot
+compile it. The script therefore looks for `gcc` or `clang` only, and falls
+back to `make_census.py` if neither is present. The fallback is slower (about
+four minutes to 10^10 rather than seventeen seconds) and produces a
+byte-identical census, so nothing is lost by not having a compiler.
+
+### macOS and Linux
 
 ```bash
 make
 ```
 
-That compiles the sieve, builds the census, runs the 45 accuracy checks, writes
-the tables, figures and macros, and typesets the manuscript to
-`paper/main.pdf`. About a minute in total on one core.
-
 Other targets:
 
 ```bash
-make census      # just the layer census          (~17 s, or ~4 min with no compiler)
+make census      # just the layer census    (~17 s, or ~4 min with no compiler)
 make check       # the 45 offline accuracy checks
 make analysis    # tables, figures and macros
 make paper       # the PDF
 make full        # as `make`, but verifies all 20 checkpoints (~2 min, ~1 GB)
+make lean        # check the Lean proofs
 make clean       # remove generated files, keep the census
 make distclean   # remove generated files and the census
 make help        # this list
 ```
 
-Without `make`, the same sequence by hand:
+### By hand, on any platform
 
 ```bash
 cc -O3 -funroll-loops -o code/fgp_sieve code/fgp_sieve.c -lm
@@ -42,18 +106,19 @@ python3 code/run_all.py  data/fgp_layers.csv --out paper --verify-limit 21000000
 cd paper && latexmk -pdf main.tex
 ```
 
-On a machine with no C compiler, replace the first two lines with:
+Without a C compiler, replace the first two lines with:
 
 ```bash
 python3 code/make_census.py --limit 10000001000 --pi 455052511 --out data/fgp_layers.csv
 ```
 
-The pure-Python generator is slower (about four minutes to 10^10 rather than
-seventeen seconds) and produces a byte-identical file.
+Do not use PowerShell's `>` to redirect the sieve's output on Windows: Windows
+PowerShell 5.1 writes UTF-16 there and would corrupt the census. `build.ps1`
+redirects the raw bytes instead, which is one reason to prefer it over typing
+the commands.
 
-Building the manuscript before the pipeline has run stops with an error that
-tells you which command to run, rather than a page of undefined control
-sequences.
+Building the manuscript before the pipeline has run stops with an error naming
+the command to run, rather than a page of undefined control sequences.
 
 ## What to expect
 
@@ -68,7 +133,8 @@ references. With `make full` the verification line reads
 ## Layout
 
 ```
-Makefile             the whole build
+Makefile             the whole build (macOS, Linux)
+build.ps1            the whole build (Windows PowerShell)
 code/
   fgp_sieve.c        C segmented sieve; produces the layer census
   make_census.py     pure-Python census generator, byte-identical output,
@@ -102,22 +168,30 @@ lean/
 
 ## Requirements
 
-- Python 3.10+ with `numpy`, `scipy`, `pandas`, `matplotlib`
+- Python 3.10+ with `numpy`, `scipy`, `pandas`, `matplotlib`, `sympy`
+  (`sympy` is used only by the self-test)
 - a C compiler (gcc or clang) is **optional**: `make_census.py` produces a
   byte-identical census in pure Python, just slower (about four minutes to
   10^10 rather than seventeen seconds)
 - `make` is optional too; the plain commands above do the same thing
-- for the manuscript: a TeX distribution with `latexmk`, `natbib`, `booktabs`,
-  `microtype`, `subcaption`, `listings`, `mathptmx`
+- for the manuscript: a TeX distribution providing `pdflatex`, `bibtex` and the
+  packages `natbib`, `booktabs`, `microtype`, `subcaption`, `listings`,
+  `mathptmx`, `placeins`. `latexmk` is used when available but is not required:
+  it is a Perl script, and MiKTeX on Windows has no Perl, so the build falls
+  back to running `pdflatex`, `bibtex`, `pdflatex`, `pdflatex` itself. The
+  resulting PDF is identical.
 
 ```
-pip install numpy scipy pandas matplotlib
+pip install numpy scipy pandas matplotlib sympy
 ```
+
+On Windows, if `pip` is not found, use `python -m pip install ...` or
+`py -3 -m pip install ...`.
 
 ## Verifying accuracy offline
 
 ```bash
-make check
+make check          # or, on Windows:  .\build.ps1 check
 ```
 
 Forty-five checks, no network needed. These do not re-run the pipeline and compare it
@@ -160,7 +234,7 @@ The default run already verifies the first sixteen scales. To check every
 layer count at all twenty checkpoints against the independent implementation:
 
 ```bash
-make full
+make full           # or, on Windows:  .\build.ps1 full
 ```
 
 That takes about two minutes and roughly 1 GB. It is the strongest check
@@ -201,17 +275,28 @@ points.
 Separate from the pipeline above. It needs the Lean toolchain rather than
 Python, and the first run downloads several GB of prebuilt Mathlib.
 
-Install the toolchain once:
+Install the toolchain once.
+
+Windows (PowerShell):
+
+```powershell
+curl.exe -O --location https://elan.lean-lang.org/elan-init.ps1
+powershell -ExecutionPolicy Bypass -File .\elan-init.ps1
+```
+
+macOS and Linux:
 
 ```bash
 curl https://elan.lean-lang.org/elan-init.sh -sSf | sh -s -- -y
 export PATH="$HOME/.elan/bin:$PATH"          # add this to your shell profile
 ```
 
+Then open a new terminal so `lake` is on PATH.
+
 Then, from the repository root:
 
 ```bash
-make lean
+make lean           # or, on Windows:  .\build.ps1 lean
 ```
 
 or by hand:
@@ -221,6 +306,8 @@ cd lean
 lake exe cache get      # downloads prebuilt Mathlib, several GB, once
 lake build              # checks FGP.lean
 ```
+
+Those two commands are identical on Windows.
 
 A clean run prints nothing and exits 0. Anything else is a real failure worth
 reading.

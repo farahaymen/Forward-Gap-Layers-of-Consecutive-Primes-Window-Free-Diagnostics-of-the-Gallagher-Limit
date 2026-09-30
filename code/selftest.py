@@ -27,12 +27,13 @@ Exit status is 0 only if every check passes.
 """
 
 import math
+import os
 import sys
 
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, __file__.rsplit("/", 1)[0])
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fgp import core, frequency, local, spatial  # noqa: E402
 
 PASS, FAIL = [], []

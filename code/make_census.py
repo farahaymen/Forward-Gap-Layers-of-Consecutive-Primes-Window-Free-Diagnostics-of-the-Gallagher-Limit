@@ -194,7 +194,7 @@ def main():
 
     if verbose:
         print(f"census to {a.limit:,} with pi_max = {pi_max:,}", file=sys.stderr)
-    with open(a.out, "w", newline="") as fh:
+    with open(a.out, "w", encoding="utf-8", newline="\n") as fh:
         census_exact(a.limit, pi_max, a.segment, fh, verbose)
     if verbose:
         print(f"wrote {a.out}", file=sys.stderr)

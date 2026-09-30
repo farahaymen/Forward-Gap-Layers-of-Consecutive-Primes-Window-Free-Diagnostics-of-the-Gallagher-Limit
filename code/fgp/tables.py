@@ -12,7 +12,8 @@ import pandas as pd
 
 
 def _w(outdir, name, body):
-    with open(os.path.join(outdir, name + ".tex"), "w") as fh:
+    with open(os.path.join(outdir, name + ".tex"), "w",
+              encoding="utf-8", newline="\n") as fh:
         fh.write(body)
 
 
@@ -208,6 +209,7 @@ def write_macros(prim, loc, st, pl, cross, asym, summ, ver, seconds, outdir, wol
             "wolfBestC": wolf["best_c"], "wolfBestGmin": wolf["best_gmin"],
             "wolfBestEst": est_name, "wolfBestS": f"{wolf['best_s']:.4f}",
         })
-    with open(os.path.join(outdir, "macros.tex"), "w") as fh:
+    with open(os.path.join(outdir, "macros.tex"), "w",
+              encoding="utf-8", newline="\n") as fh:
         for k, v in m.items():
             fh.write(f"\\newcommand{{\\{k}}}{{{v}}}\n")

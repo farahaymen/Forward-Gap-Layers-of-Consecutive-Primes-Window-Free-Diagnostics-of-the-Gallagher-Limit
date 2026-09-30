@@ -1,0 +1,25 @@
+base primes below 100000: 9591
+ checkpoint  0: N=200000 X=p_N=2750159 (1.1s)
+ checkpoint  1: N=300411 X=p_N=4262509 (2.1s)
+ checkpoint  2: N=451234 X=p_N=6601211 (2.9s)
+ checkpoint  3: N=677778 X=p_N=10213061 (3.9s)
+ checkpoint  4: N=1000000 X=p_N=15485863 (4.8s)
+ checkpoint  5: N=1529183 X=p_N=24373961 (5.7s)
+ checkpoint  6: N=2296917 X=p_N=37614323 (6.6s)
+ checkpoint  7: N=3450095 X=p_N=57995527 (7.6s)
+ checkpoint  8: N=5182233 X=p_N=89359883 (8.6s)
+ checkpoint  9: N=9000000 X=p_N=160481183 (9.7s)
+ checkpoint 10: N=11691997 X=p_N=211733111 (10.8s)
+ checkpoint 11: N=17562024 X=p_N=325619971 (11.9s)
+ checkpoint 12: N=26379128 X=p_N=500465113 (13.2s)
+ checkpoint 13: N=39622904 X=p_N=768813691 (14.4s)
+ checkpoint 14: N=59515785 X=p_N=1180371793 (16.1s)
+ checkpoint 15: N=100000000 X=p_N=2038074743 (17.2s)
+ checkpoint 16: N=134277704 X=p_N=2778410251 (18.1s)
+ checkpoint 17: N=201692513 X=p_N=4259763509 (19.8s)
+ checkpoint 18: N=302953271 X=p_N=6528037501 (22.3s)
+ checkpoint 19: N=455052511 X=p_N=9999999967 (26.3s)
+pi(10000001000) = 455052555
+largest prime <= LIMIT: 10000000999
+max gap = 354 after 4302407359
+elapsed 26.4s

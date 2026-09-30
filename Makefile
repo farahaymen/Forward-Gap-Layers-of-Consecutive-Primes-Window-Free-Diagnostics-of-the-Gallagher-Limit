@@ -73,9 +73,22 @@ $(MACROS): $(CENSUS) code/run_all.py $(wildcard code/fgp/*.py)
 analysis: $(MACROS)
 
 # ---------------------------------------------------------------- paper
+# latexmk is a Perl script. Where Perl is missing (MiKTeX on Windows is the
+# usual case, but it can happen on a minimal Unix too) the explicit passes
+# produce the same document: one run, bibtex, then two more to settle the
+# citations and cross-references.
 $(PDF): $(MACROS) paper/main.tex paper/assumptions.tex paper/refs.bib
 	@echo "==> manuscript"
-	cd paper && latexmk -pdf -interaction=nonstopmode main.tex
+	@cd paper && if command -v latexmk >/dev/null 2>&1 && command -v perl >/dev/null 2>&1; then \
+	  latexmk -pdf -interaction=nonstopmode main.tex; \
+	else \
+	  echo "    (latexmk needs Perl; using pdflatex and bibtex)"; \
+	  pdflatex -interaction=nonstopmode main.tex >/dev/null; \
+	  bibtex main >/dev/null 2>&1 || true; \
+	  pdflatex -interaction=nonstopmode main.tex >/dev/null; \
+	  pdflatex -interaction=nonstopmode main.tex >/dev/null; \
+	fi
+	@test -f paper/main.pdf || { echo "the manuscript did not build; see paper/main.log"; exit 1; }
 
 paper: check $(PDF)
 	@echo
