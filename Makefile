@@ -13,6 +13,7 @@
 #   make clean      remove generated files, keep the census
 #   make distclean  remove generated files and the census
 #   make lean       check the Lean proofs (needs elan; downloads Mathlib)
+#   make submission flat upload package for the journal (submission.zip)
 #   make help       this list
 #
 # Override any of these on the command line, e.g.  make VERIFY=500000000
@@ -34,7 +35,7 @@ SIEVE    := code/fgp_sieve
 MACROS   := paper/tables/macros.tex
 PDF      := paper/main.pdf
 
-.PHONY: all full census check analysis paper lean clean distclean help
+.PHONY: all full census check analysis paper submission lean clean distclean help
 .DELETE_ON_ERROR:
 
 all: paper
@@ -77,7 +78,7 @@ analysis: $(MACROS)
 # usual case, but it can happen on a minimal Unix too) the explicit passes
 # produce the same document: one run, bibtex, then two more to settle the
 # citations and cross-references.
-$(PDF): $(MACROS) paper/main.tex paper/assumptions.tex paper/refs.bib
+$(PDF): $(MACROS) paper/main.tex paper/fgpmacros.tex paper/assumptions.tex paper/refs.bib
 	@echo "==> manuscript"
 	@cd paper && if command -v latexmk >/dev/null 2>&1 && command -v perl >/dev/null 2>&1; then \
 	  latexmk -pdf -interaction=nonstopmode main.tex; \
@@ -93,6 +94,12 @@ $(PDF): $(MACROS) paper/main.tex paper/assumptions.tex paper/refs.bib
 paper: check $(PDF)
 	@echo
 	@echo "built $(PDF)"
+
+# ---------------------------------------------------------------- submission
+# One folder with every \input, the macros and the bibliography inlined, the
+# class file and the figures: what the journal's upload system expects.
+submission: paper
+	$(PY) code/make_submission.py
 
 # ---------------------------------------------------------------- lean
 # Appendix B. Separate from the pipeline above: it needs the Lean toolchain,
@@ -110,12 +117,13 @@ clean:
 	       paper/tables/*.tex paper/main.pdf
 	cd paper && latexmk -C >/dev/null 2>&1 || true
 	rm -f paper/main.bbl paper/main.blg paper/main.aux paper/main.log \
-	      paper/main.out paper/main.fls paper/main.fdb_latexmk
+	      paper/main.out paper/main.fls paper/main.fdb_latexmk \
+	      paper/main.fff paper/main.ttt paper/main.lof paper/main.lot
 	rm -rf code/fgp/__pycache__ $(SIEVE) code/sieve.log
-	rm -rf lean/.lake
+	rm -rf lean/.lake submission submission.zip
 
 distclean: clean
 	rm -f $(CENSUS)
 
 help:
-	@sed -n '3,17p' Makefile | sed 's/^#\{0,1\} \{0,1\}//'
+	@sed -n '3,18p' Makefile | sed 's/^#\{0,1\} \{0,1\}//'

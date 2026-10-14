@@ -66,7 +66,7 @@ def independent_census(scales: list[Scale], limit: int, seg: int = 100_000_000,
         # prime primes[i] has index n_prev + i + (1 if carry is None else 0)
         # we need layer contributions for indices n >= 2 (skip p_1 = 2)
         idx0 = n_prev if carry is not None else 1   # index of primes[0]
-        idx = idx0 + np.arange(len(gaps))           # index of each gap's prime
+        idx = idx0 + np.arange(len(gaps), dtype=np.int64)  # index of each gap's prime
         ok = idx >= 2
         if ok.any() and int(gaps[ok].max()) >= gmax:
             j = int(np.flatnonzero(ok & (gaps >= gmax))[0])

@@ -10,7 +10,7 @@ Layout policy (the reason the earlier version produced unreadable figures):
     the panels ("outside lower center", which constrained layout reserves room
     for). No in-axes legend can then cover a curve, whatever the data does.
   * A family of twenty curves indexed by scale is a sequential encoding, so it
-    gets a colourbar rather than a legend listing three of the twenty.
+    gets a colorbar rather than a legend listing three of the twenty.
   * Axis limits are computed from the data with a fixed fractional pad, so a
     rerun on a different range cannot clip a series.
 
@@ -18,9 +18,9 @@ Figure widths match the text width of the manuscript (A4, 2.6 cm margins ->
 6.22 in), so \\includegraphics[width=\\linewidth] scales them 1:1 and the font
 sizes below are the sizes that appear on the page.
 
-Colours are the Okabe-Ito colour-blind-safe set; the categorical subsets used
+Colors are the Okabe-Ito color-blind-safe set; the categorical subsets used
 here pass adjacent-pair CVD separation, and every series additionally differs
-by marker or line style, so identity is never carried by colour alone.
+by marker or line style, so identity is never carried by color alone.
 
 All figures are written as PDF (vector, for the manuscript) and PNG (preview).
 """
@@ -69,7 +69,7 @@ plt.rcParams.update({
     "ps.fonttype": 42,
 })
 
-# Okabe-Ito colour-blind-safe palette
+# Okabe-Ito color-blind-safe palette
 C = {"blue": "#0072B2", "orange": "#E69F00", "green": "#009E73",
      "red": "#D55E00", "purple": "#CC79A7", "sky": "#56B4E9",
      "yellow": "#F0E442", "black": "#000000", "grey": "#6e6e6e"}
@@ -80,8 +80,19 @@ HALF = 3.05
 SEQ_CMAP = "viridis"          # perceptually uniform, monotone in lightness
 
 
+def _tint(color, a):
+    """Opaque equivalent of `color` drawn at opacity `a` over white.
+
+    The journal asks for EPS figure sources, and PostScript has no
+    transparency: an alpha fill would be flattened or rasterized on export.
+    Every shaded band sits beneath the lines and markers (zorder 1), so an
+    opaque tint looks identical and exports cleanly to every format."""
+    r, g, b = matplotlib.colors.to_rgb(color)
+    return matplotlib.colors.to_hex((1 - a + a * r, 1 - a + a * g, 1 - a + a * b))
+
+
 def _save(fig, outdir, name):
-    for ext in ("pdf", "png"):
+    for ext in ("pdf", "eps", "png"):
         fig.savefig(os.path.join(outdir, f"{name}.{ext}"),
                     bbox_inches="tight", pad_inches=0.015)
     plt.close(fig)
@@ -126,7 +137,7 @@ def fig_cfit(prim: pd.DataFrame, outdir, quoted=None):
     fig, ax = plt.subplots(figsize=(FULL, 2.45), layout="constrained")
     X = prim.X.to_numpy()
 
-    ax.fill_between(X, prim.env_min, prim.env_max, color=C["sky"], alpha=0.30,
+    ax.fill_between(X, prim.env_min, prim.env_max, color=_tint(C["sky"], 0.30),
                     lw=0, label="envelope of all specifications", zorder=1)
     ax.axhline(1, color=C["black"], lw=0.7, ls=":", zorder=2,
                label="Gallagher limit")
@@ -154,7 +165,7 @@ def fig_cfit(prim: pd.DataFrame, outdir, quoted=None):
 
 # ------------------------------------------------------------ Figure 2
 def fig_specgrid(grid: pd.DataFrame, outdir):
-    """Every specification across every scale: colour = window, style = estimator."""
+    """Every specification across every scale: color = window, style = estimator."""
     fig, axes = plt.subplots(1, 2, figsize=(FULL, 2.55), sharey=True,
                              layout="constrained")
     styles = {"POIS": "-", "WLS": "--", "OLS": ":"}
@@ -274,7 +285,7 @@ def fig_model(mvd: pd.DataFrame, outdir):
 # ------------------------------------------------------------ Figure 5
 def fig_collapse(spat: pd.DataFrame, outdir, min_count=2000, xmax=2.6):
     """The scaling collapse. Scale is a sequential variable, so it is encoded
-    by a colourbar rather than by a legend naming three of the twenty curves."""
+    by a colorbar rather than by a legend naming three of the twenty curves."""
     ks = sorted(spat.k.unique())
     lo = math.log10(spat[spat.k == ks[0]].X.iloc[0])
     hi = math.log10(spat[spat.k == ks[-1]].X.iloc[0])
@@ -385,7 +396,7 @@ def fig_crossover(cross: pd.DataFrame, asym: pd.DataFrame, outdir):
     model_curve = np.interp(1.0 / grid, inv[order], a.deficit.to_numpy()[order])
 
     axes[1].fill_between(L, L - allc.max(axis=1), L - allc.min(axis=1),
-                         color=C["sky"], alpha=0.30, lw=0, zorder=1)
+                         color=_tint(C["sky"], 0.30), lw=0, zorder=1)
     axes[1].axhline(1.5, color=C["red"], lw=0.9, ls="--", zorder=2)
     axes[1].plot(grid, model_curve, "-", color=C["red"], lw=1.2, zorder=3)
     axes[1].errorbar(L, dfc, yerr=se, fmt="o", ms=3, lw=0.8, capsize=1.5,
@@ -411,7 +422,7 @@ def fig_crossover(cross: pd.DataFrame, asym: pd.DataFrame, outdir):
         Line2D([], [], color=C["red"], lw=1.2, label="density model"),
         Line2D([], [], color=C["red"], lw=1.0, ls="--",
                label=r"model asymptote $3/2$"),
-        Patch(facecolor=C["sky"], alpha=0.30, lw=0,
+        Patch(facecolor=_tint(C["sky"], 0.30), lw=0,
               label="range over six locators"),
     ]
     _below(fig, handles, [h.get_label() for h in handles], ncol=4)

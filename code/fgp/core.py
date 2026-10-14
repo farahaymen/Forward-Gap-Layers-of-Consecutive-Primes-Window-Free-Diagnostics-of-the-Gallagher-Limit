@@ -68,7 +68,12 @@ class Scale:
 def load_census(path: str) -> list[Scale]:
     """Load a census. The sumsq column exceeds 64 bits, so it is read as exact
     Python integers via dtype=object rather than as a numpy integer type."""
-    dt = {"k": int, "N": int, "X": int, "g": int, "count": int, "sum": "uint64"}
+    # Explicit 64-bit types. A bare `int` here means numpy's default integer,
+    # which on Windows with NumPy 1.x is 32-bit: X above 2,147,483,647 (the
+    # last four checkpoints) would then wrap around silently, to negative
+    # values or, at X = 9,999,999,967, to the wrong positive value 1,410,065,375.
+    dt = {"k": np.int64, "N": np.int64, "X": np.int64, "g": np.int64,
+          "count": np.int64, "sum": "uint64"}
     head = pd.read_csv(path, nrows=0)
     has_sq = "sumsq" in head.columns
     if has_sq:
@@ -76,6 +81,14 @@ def load_census(path: str) -> list[Scale]:
     df = pd.read_csv(path, dtype=dt)
     if has_sq:
         df["sumsq"] = df["sumsq"].map(int)
+    # Guard against any other silent corruption of the checkpoint columns:
+    # the checkpoints must be nested, so N and X must both increase strictly.
+    first = df.groupby("k", sort=True)[["N", "X"]].first()
+    if (first["X"] <= 1).any() or not (first["N"].is_monotonic_increasing
+                                       and first["X"].is_monotonic_increasing
+                                       and first["X"].is_unique):
+        raise ValueError(f"{path}: checkpoint N and X are not strictly increasing; "
+                         "the census file or its integer types are wrong")
     scales = []
     for k, grp in df.groupby("k", sort=True):
         grp = grp.sort_values("g")

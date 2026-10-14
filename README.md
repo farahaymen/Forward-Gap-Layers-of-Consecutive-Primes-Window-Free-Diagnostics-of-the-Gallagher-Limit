@@ -104,6 +104,7 @@ cc -O3 -funroll-loops -o code/fgp_sieve code/fgp_sieve.c -lm
 python3 code/selftest.py data/fgp_layers.csv
 python3 code/run_all.py  data/fgp_layers.csv --out paper --verify-limit 2100000000
 cd paper && latexmk -pdf main.tex
+python3 code/make_submission.py      # flat package for the journal
 ```
 
 Without a C compiler, replace the first two lines with:
@@ -120,13 +121,36 @@ the commands.
 Building the manuscript before the pipeline has run stops with an error naming
 the command to run, rather than a page of undefined control sequences.
 
+## Journal submission (Experimental Mathematics)
+
+The manuscript follows the journal's LaTeX instructions: standard `article`
+class in one column, every macro in `paper/fgpmacros.tex` (input once after
+the packages), American spelling, tables and figures placed at the end by
+`endfloat`, and EPS figure sources alongside the PDFs. References use the
+Taylor & Francis style S (`paper/tfs.bst`). To read the tables and figures in
+place while editing, comment out the `endfloat` line in `paper/main.tex`.
+
+After the paper has been built once, run from the repository root:
+
+```bash
+python3 code/make_submission.py
+```
+
+On Windows: `python code\make_submission.py` (or `py -3 code\make_submission.py`).
+
+This writes `submission/Manuscript_with_author_details.pdf` and
+`submission/LaTeX_Source_Files.zip` (flat: `main.tex` with the tables and the
+assumptions appendix inlined, `fgpmacros.tex` with every number, `refs.bib`,
+`main.bbl`, `tfs.bst`, and each figure as EPS and PDF). It test-compiles the
+source with both `pdflatex` and `latex` and stops if either fails.
+
 ## What to expect
 
 A correct run prints `45 passed, 0 failed` from the checks, and from the
 analysis a census sha256 of
 `bb82712165d660a002018bedebe5bfb6e94f4839b24ef532299fe0c5c26b24c8`,
 `C_fit primary: 1.2483 -> 1.1460`, `E2: 0.84606 -> 0.88815`, and
-`g*: 14.13 -> 22.37`. The manuscript comes out at 20 pages with no undefined
+`g*: 14.13 -> 22.37`. The manuscript comes out at 31 pages (tables and figures at the end) with no undefined
 references. With `make full` the verification line reads
 `2166 layer counts compared, 0 mismatches`.
 
@@ -215,7 +239,7 @@ elsewhere:
   Appendix A (they agree to 3e-4 at log X = 10^4).
 
 The suite exits non-zero if anything fails. It found real errors during
-development, including a wrong arithmetic factor H(g); see Section 8.3 and
+development, including a wrong arithmetic factor H(g); see Section 8.2 and
 Appendix C of the paper, which lists every assumption with its status.
 
 Two further defects were found and fixed the same way:

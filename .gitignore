@@ -1,0 +1,21 @@
+# LaTeX build products
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.blg
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.fff
+paper/*.ttt
+paper/*.lof
+paper/*.lot
+# Python and compiled binaries
+__pycache__/
+code/fgp_sieve
+code/fgp_sieve.exe
+code/sieve.log
+# Lean build
+lean/.lake/
+# Submission package (rebuilt by make submission)
+submission/
+submission.zip

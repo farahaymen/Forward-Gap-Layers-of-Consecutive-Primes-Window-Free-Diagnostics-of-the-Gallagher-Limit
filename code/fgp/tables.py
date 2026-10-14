@@ -18,7 +18,9 @@ def _w(outdir, name, body):
 
 
 def _n(x):
-    return f"{int(x):,}".replace(",", "\\,")
+    # American style digit grouping (2,750,159); the braces stop LaTeX adding
+    # punctuation space after the comma in math mode.
+    return f"{int(x):,}".replace(",", "{,}")
 
 
 def table_census(prim: pd.DataFrame, outdir):
@@ -84,6 +86,14 @@ def table_uncertainty(loc: pd.DataFrame, outdir, ks=(1, 5, 9, 13, 16, 19)):
     _w(outdir, "tab_uncertainty", "\n".join(lines))
 
 
+def _pm(value, se):
+    """Format value +- se with the standard error to two significant figures,
+    so that a very small uncertainty is never printed as 0.0000."""
+    import math
+    dec = 4 if se <= 0 else max(0, 1 - int(math.floor(math.log10(abs(se)))))
+    return f"{value:+.{dec}f} $\\pm$ {se:.{dec}f}"
+
+
 def table_steps(st: pd.DataFrame, pl: pd.DataFrame, outdir):
     plr = pl.set_index("statistic")
     names = {"E2": "$E_2$", "E3": "$E_3$", "D_left": "$D_{\\mathrm{left}}$",
@@ -95,7 +105,7 @@ def table_steps(st: pd.DataFrame, pl: pd.DataFrame, outdir):
         beta = f"{plr.loc[r.statistic].beta:.3f} $\\pm$ {plr.loc[r.statistic].SE_beta:.3f}" \
             if r.statistic in plr.index else "--"
         lines.append(f"{names[r.statistic]} & {int(r.n_toward)}/{int(r.n_steps)} & {r.median_z:.1f} & "
-                     f"{r.min_z:.2f} & {r.end_change:+.4f} $\\pm$ {r.end_SE:.4f} & {r.end_z:.0f} & {beta} \\\\")
+                     f"{r.min_z:.2f} & {_pm(r.end_change, r.end_SE)} & {r.end_z:.0f} & {beta} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     _w(outdir, "tab_steps", "\n".join(lines))
 
